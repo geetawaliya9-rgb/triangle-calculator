@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>त्रिभुज कोण कैलकुलेटर</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c5cff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TriCalc">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#f5f3ff; --card:#ffffff; --ink:#1f1b2e; --sub:#6b6480;
+    --accent:#7c5cff; --accent2:#ff6b8b; --accent3:#22b8a0;
+    --line:#e4e0f5; --err:#e0405f;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Noto Sans Devanagari','Segoe UI',system-ui,sans-serif;
+    display:flex; justify-content:center;
+  }
+  .wrap{width:100%; max-width:480px; padding:20px 16px 40px;}
+  h1{ font-size:1.3rem; text-align:center; margin:6px 0 4px; }
+  .sub{ text-align:center; color:var(--sub); font-size:.85rem; margin-bottom:18px; }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:18px; margin-bottom:16px; box-shadow:0 4px 18px rgba(80,60,150,.06);
+  }
+  .stage{ position:relative; width:100%; aspect-ratio: 340 / 300; }
+  .stage svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .side-box{
+    position:absolute; transform:translate(-50%,-50%);
+    display:flex; align-items:baseline; gap:1px;
+    z-index:3;
+  }
+  .side-input{
+    width:3ch; min-width:2ch; padding:2px 0 2px 2px; text-align:right;
+    border-radius:6px; border:none; background:transparent;
+    color:var(--ink); font-size:1rem; font-weight:700; outline:none;
+  }
+  .side-input::-webkit-outer-spin-button,
+  .side-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .side-input[type=number]{ -moz-appearance:textfield; }
+  .side-input:focus{ outline:none; }
+  .unit-badge{
+    font-size:.68rem; font-weight:700; color:var(--sub);
+    user-select:none; white-space:nowrap; padding:6px 3px 6px 2px;
+    cursor:text;
+  }
+  #box-aadhar .side-input{ color:var(--accent2); }
+  #box-lamb .side-input{ color:var(--accent3); }
+  #box-karn .side-input{ color:var(--accent); }
+  .side-tag{
+    position:absolute; transform:translate(-50%,-50%);
+    font-size:.7rem; font-weight:700; white-space:nowrap;
+    padding:4px 6px; border-radius:8px;
+    background:rgba(255,255,255,.001); z-index:3; user-select:none;
+    text-align:center; line-height:1.3;
+  }
+  .unit-select-row{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-bottom:14px; font-size:.85rem;
+  }
+  .unit-select-row select{
+    padding:6px 10px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--card); color:var(--ink); font-size:.85rem; font-weight:600;
+  }
+  .drag-hint{
+    text-align:center; font-size:.72rem; color:var(--sub); margin-top:10px;
+  }
+  .reset-btn{
+    display:block; margin:10px auto 0; padding:8px 16px; border-radius:10px;
+    border:1.5px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:.8rem; font-weight:600; cursor:pointer;
+  }
+  .err{color:var(--err); text-align:center; font-size:.85rem; margin-top:8px; min-height:1.1em;}
+  .angles{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+  .apill{
+    flex:1; min-width:100px; text-align:center; padding:12px 8px; border-radius:14px;
+    background:var(--bg); border:1px solid var(--line);
+  }
+  .apill .v{font-size:1.25rem; font-weight:700;}
+  .apill .l{font-size:.75rem; color:var(--sub); margin-top:2px;}
+  .footer-note{text-align:center; font-size:.75rem; color:var(--sub); margin-top:10px;}
+  .steps-card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:18px; margin-bottom:16px;
+  }
+  .steps-title{ font-weight:700; font-size:.95rem; margin-bottom:10px; }
+  .step-line{
+    font-size:.85rem; padding:8px 10px; border-radius:10px; background:var(--bg);
+    margin-bottom:8px; line-height:1.5; font-family:'Noto Sans Devanagari',monospace,sans-serif;
+  }
+  .step-line b{color:var(--accent);}
+  .pdf-btn{
+    display:block; width:100%; margin-top:6px; padding:12px 16px; border-radius:12px;
+    border:none; background:var(--accent); color:#fff;
+    font-size:.9rem; font-weight:700; cursor:pointer;
+  }
+  .wa-btn{
+    display:block; width:100%; margin-top:10px; padding:12px 16px; border-radius:12px;
+    border:none; background:#25D366; color:#fff;
+    font-size:.9rem; font-weight:700; cursor:pointer;
+  }
+  .history-card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:18px; margin-bottom:16px;
+  }
+  .history-title{ font-weight:700; font-size:.95rem; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+  .history-title button{
+    border:none; background:none; color:var(--err); font-size:.75rem; font-weight:700; cursor:pointer;
+  }
+  .history-item{
+    font-size:.82rem; padding:10px; border-radius:10px; background:var(--bg);
+    margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .history-item .hvals{ line-height:1.5; }
+  .history-item .htime{ font-size:.68rem; color:var(--sub); white-space:nowrap; }
+  .history-empty{ font-size:.8rem; color:var(--sub); text-align:center; padding:10px 0; }
+  /* ---- Karn (Diagonal) Result Banner ---- */
+  .karn-banner{
+    display:none;
+    background:linear-gradient(135deg,#7c5cff 0%,#a07bff 100%);
+    border-radius:18px;
+    padding:18px 20px;
+    margin-bottom:16px;
+    box-shadow:0 6px 24px rgba(124,92,255,.28);
+    text-align:center;
+    animation: popIn .35s cubic-bezier(.4,1.6,.6,1) both;
+  }
+  @keyframes popIn{
+    from{opacity:0;transform:scale(.88);}
+    to{opacity:1;transform:scale(1);}
+  }
+  .karn-banner.visible{ display:block; }
+  .karn-banner .kb-label{
+    font-size:.8rem; font-weight:700; color:rgba(255,255,255,.75);
+    letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;
+  }
+  .karn-banner .kb-icon{ font-size:1.6rem; line-height:1; margin-bottom:4px; }
+  .karn-banner .kb-value{
+    font-size:2.2rem; font-weight:900; color:#fff; line-height:1.1;
+    letter-spacing:-.01em;
+  }
+  .karn-banner .kb-unit{
+    font-size:1rem; font-weight:700; color:rgba(255,255,255,.8); margin-left:4px;
+  }
+  .karn-banner .kb-sub{
+    font-size:.78rem; color:rgba(255,255,255,.7); margin-top:6px;
+  }
+  /* Calculate button states */
+  #calcBtn{ transition: background .25s, color .25s, border-color .25s; }
+  #calcBtn.calc-dirty{
+    background:var(--accent) !important;
+    color:#fff !important;
+    border-color:var(--accent) !important;
+  }
+  @media print{
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{ position:absolute; left:0; top:0; width:100%; }
+    .no-print{ display:none !important; }
+    .side-input{ border:none !important; }
+    body.hide-history-print #historyCard{ display:none !important; }
+    body.history-only-print #printArea > *:not(#historyCard):not(h1){ display:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="printArea">
+  <h1>📐 त्रिभुज कोण कैलकुलेटर</h1>
+  <div class="sub no-print">भुजा पर ही नाप लिखो — बाकी सब अपने आप निकल जाएगा</div>
+
+  <div class="card">
+    <div class="unit-select-row no-print">
+      <label for="unitSelect">📏 यूनिट:</label>
+      <select id="unitSelect">
+        <option value="cm">सेंटीमीटर (cm)</option>
+        <option value="mm">मिलीमीटर (mm)</option>
+        <option value="m">मीटर (m)</option>
+        <option value="inch">इंच (inch)</option>
+        <option value="feet">फ़ीट (feet)</option>
+      </select>
+    </div>
+    <div class="stage" id="stage">
+      <svg id="triSvg" viewBox="0 0 340 300" xmlns="http://www.w3.org/2000/svg"></svg>
+      <span class="side-tag" id="tag-aadhar" style="color:var(--accent2)">आधार<br><span style="font-size:.65rem;opacity:.85;">Base</span></span>
+      <span class="side-tag" id="tag-lamb" style="color:var(--accent3)">लंब<br><span style="font-size:.65rem;opacity:.85;">Perpendicular</span></span>
+      <span class="side-tag" id="tag-karn" style="color:var(--accent)">कर्ण<br><span style="font-size:.65rem;opacity:.85;">Hypotenuse</span></span>
+      <div class="side-box" id="box-aadhar">
+        <input class="side-input" type="number" id="in-aadhar" inputmode="decimal" step="any" placeholder="?">
+        <span class="unit-badge" id="unit-aadhar" data-for="in-aadhar">cm</span>
+      </div>
+      <div class="side-box" id="box-lamb">
+        <input class="side-input" type="number" id="in-lamb" inputmode="decimal" step="any" placeholder="?">
+        <span class="unit-badge" id="unit-lamb" data-for="in-lamb">cm</span>
+      </div>
+      <div class="side-box" id="box-karn">
+        <input class="side-input" type="number" id="in-karn" inputmode="decimal" step="any" placeholder="?">
+        <span class="unit-badge" id="unit-karn" data-for="in-karn">cm</span>
+      </div>
+    </div>
+    <div class="err" id="errBox"></div>
+    <button class="reset-btn no-print" id="calcBtn" type="button" style="border-color:var(--accent3); color:var(--accent3); font-size:.95rem; padding:10px 20px;">🧮 कैलकुलेट करो</button>
+    <div class="err no-print" id="saveMsg" style="color:var(--accent3);display:none;"></div>
+    <div class="footer-note no-print">1 भुजा लिखो तो 3:4:5 नियम से बाकी 2 निकलेंगी, या 2 भुजाएँ लिखो तो तीसरी सही-सही निकलेगी</div>
+  </div>
+
+  <!-- Karn (Diagonal) Result Banner -->
+  <div class="karn-banner" id="karnBanner">
+    <div class="kb-icon">📐</div>
+    <div class="kb-label">कर्ण (Diagonal / Hypotenuse) निकला</div>
+    <div>
+      <span class="kb-value" id="karnBannerValue">—</span><span class="kb-unit" id="karnBannerUnit">cm</span>
+    </div>
+    <!-- Feet breakdown: shown only when unit = feet -->
+    <div id="karnFeetBreakdown" style="display:none; margin-top:10px; background:rgba(255,255,255,.15); border-radius:12px; padding:10px 14px;">
+      <div id="karnFeetBreakdownLabel" style="font-size:.72rem; color:rgba(255,255,255,.8); font-weight:700; margin-bottom:6px; letter-spacing:.04em;">📏 आसान भाषा में (Feet · Inch · सूत)</div>
+      <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:#fff;" id="kb-feet">0</div>
+          <div style="font-size:.68rem; color:rgba(255,255,255,.75); font-weight:700;">फ़ीट (Feet)</div>
+        </div>
+        <div style="font-size:1.5rem; font-weight:300; color:rgba(255,255,255,.5); line-height:1.8;">–</div>
+        <div style="text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:#fff;" id="kb-inch">0</div>
+          <div style="font-size:.68rem; color:rgba(255,255,255,.75); font-weight:700;">इंच (Inch)</div>
+        </div>
+        <div style="font-size:1.5rem; font-weight:300; color:rgba(255,255,255,.5); line-height:1.8;">–</div>
+        <div style="text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:#fff;" id="kb-sut">0</div>
+          <div style="font-size:.68rem; color:rgba(255,255,255,.75); font-weight:700;">सूत (Sut)</div>
+        </div>
+      </div>
+      <div style="font-size:.7rem; color:rgba(255,255,255,.6); margin-top:6px;">1 फ़ीट = 12 इंच · 1 इंच = 8 सूत</div>
+    </div>
+    <div class="kb-sub" id="karnBannerSub">यही है आपकी diagonal की लंबाई ✅</div>
+  </div>
+
+  <div class="steps-card" id="stepsCard" style="display:none;">
+    <div class="steps-title">📝 सूत्र और गणना (step-by-step)</div>
+    <div id="stepsList"></div>
+  </div>
+
+  <button class="pdf-btn no-print" id="pdfBtn" type="button">📄 PDF बनाओ / शेयर करो (नया नाप)</button>
+  <button class="pdf-btn no-print" id="historyPdfBtn" type="button" style="background:var(--sub); margin-top:10px;">🗂️ History की अलग PDF बनाओ</button>
+
+  <div class="history-card" id="historyCard">
+    <div class="history-title">
+      <span>🗂️ पुराने नाप (History)</span>
+      <button id="clearHistBtn" type="button" class="no-print">सब हटाओ</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const aadharI=$('in-aadhar'), lambI=$('in-lamb'), karnI=$('in-karn');
+const errBox=$('errBox'), svg=$('triSvg');
+const stage=$('stage');
+const tagA=$('tag-aadhar'), tagL=$('tag-lamb'), tagK=$('tag-karn');
+const boxA=$('box-aadhar'), boxL=$('box-lamb'), boxK=$('box-karn');
+const unitBadgeA=$('unit-aadhar'), unitBadgeL=$('unit-lamb'), unitBadgeK=$('unit-karn');
+const resetBtn=$('resetBtn');
+const unitSelect=$('unitSelect');
+const stepsCard=$('stepsCard'), stepsList=$('stepsList'), pdfBtn=$('pdfBtn'), historyPdfBtn=$('historyPdfBtn');
+const historyList=$('historyList'), clearHistBtn=$('clearHistBtn');
+
+// ---- History (saved to localStorage as a simple file) ----
+let history = [];
+try{
+  const raw = localStorage.getItem('triHistory');
+  if(raw) history = JSON.parse(raw);
+}catch(e){ history = []; }
+
+function saveHistory(){
+  try{ localStorage.setItem('triHistory', JSON.stringify(history)); }catch(e){}
+}
+
+function renderHistory(){
+  if(history.length===0){
+    historyList.innerHTML = '<div class="history-empty">अभी कोई पुराना नाप सेव नहीं है</div>';
+    return;
+  }
+  historyList.innerHTML = history.slice().reverse().map(h=>`
+    <div class="history-item">
+      <div class="hvals">आधार (Base): ${h.aadhar} ${h.unit} · लंब (Perp.): ${h.lamb} ${h.unit} · कर्ण (Hyp.): ${h.karn} ${h.unit}</div>
+      <div class="htime">${h.time}</div>
+    </div>
+  `).join('');
+}
+
+function addToHistory(aadhar, lamb, karn, unit){
+  const now = new Date();
+  const time = now.toLocaleDateString('hi-IN') + ' ' + now.toLocaleTimeString('hi-IN', {hour:'2-digit', minute:'2-digit'});
+  history.push({aadhar, lamb, karn, unit, time});
+  if(history.length > 50) history.shift();
+  saveHistory();
+  renderHistory();
+}
+
+clearHistBtn.addEventListener('click', ()=>{
+  history = [];
+  saveHistory();
+  renderHistory();
+});
+
+renderHistory();
+
+function toDeg(rad){ return rad*180/Math.PI; }
+let lastResult = null;
+let lastSteps = [];
+
+// unit persistence
+let currentUnit='cm';
+try{
+  const savedUnit = localStorage.getItem('triUnit');
+  if(savedUnit) currentUnit = savedUnit;
+}catch(e){}
+unitSelect.value = currentUnit;
+
+function applyUnit(){
+  [unitBadgeA, unitBadgeL, unitBadgeK].forEach(b=> b.textContent = currentUnit);
+}
+applyUnit();
+
+unitSelect.addEventListener('change', ()=>{
+  currentUnit = unitSelect.value;
+  applyUnit();
+  try{ localStorage.setItem('triUnit', currentUnit); }catch(e){}
+});
+
+// Fixed visual layout (not to scale) so inputs always sit in the same place
+const A=[60,240], B=[280,240], C=[60,40]; // right angle at A
+
+// Fixed positions matching photo layout (viewBox 340x300)
+// A=[60,240] bottom-left right-angle, B=[280,240] bottom-right, C=[60,40] top-left
+function place(el, pt){
+  el.style.left=(pt[0]/340*100)+'%';
+  el.style.top=(pt[1]/300*100)+'%';
+}
+
+function positionOverlay(){
+  // लंब (Perpendicular) — left side, label left of line, input below label
+  place(tagL, [22, 130]);   // tag left side mid
+  place(boxL, [22, 155]);   // input just below tag
+
+  // कर्ण (Hypotenuse) — diagonal, label top-right area, input below
+  place(tagK, [195, 108]);  // tag upper right
+  place(boxK, [195, 132]);  // input below tag
+
+  // आधार (Base) — bottom, input left of label
+  place(boxA, [148, 262]);  // input center-bottom
+  place(tagA, [220, 262]);  // label right of input
+}
+
+// makeDraggable removed — positions are fixed
+
+function drawBase(){
+  const s=14;
+  const rightAngleMark = `<polyline points="${A[0]},${A[1]-s} ${A[0]+s},${A[1]-s} ${A[0]+s},${A[1]}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+  svg.innerHTML = `
+    <polygon points="${A.join(',')} ${B.join(',')} ${C.join(',')}"
+      fill="var(--accent)" fill-opacity="0.12" stroke="var(--ink)" stroke-width="2.5"/>
+    ${rightAngleMark}
+    <circle cx="${A[0]}" cy="${A[1]}" r="4" fill="var(--ink)"/>
+    <circle cx="${B[0]}" cy="${B[1]}" r="4" fill="var(--ink)"/>
+    <circle cx="${C[0]}" cy="${C[1]}" r="4" fill="var(--ink)"/>
+  `;
+}
+
+function setVal(el, val){
+  el.value = val;
+  const len = String(val).length || 1;
+  el.style.width = (len+1)+'ch';
+}
+
+function update(){
+  let aadhar=parseFloat(aadharI.value);
+  let lamb=parseFloat(lambI.value);
+  let karn=parseFloat(karnI.value);
+
+  errBox.textContent='';
+  errBox.style.color = 'var(--err)';
+  stepsCard.style.display='none';
+  stepsList.innerHTML='';
+
+  const has = [!isNaN(aadhar)&&aadhar>0, !isNaN(lamb)&&lamb>0, !isNaN(karn)&&karn>0];
+  const count = has.filter(Boolean).length;
+  const steps = [];
+  const stepsEN = [];
+
+  if(count < 1){
+    errBox.textContent = 'कम से कम 1 भुजा पर नाप लिखो';
+    return;
+  }
+
+  if(count === 1){
+    if(has[0]){
+      const scale = aadhar/3;
+      steps.push(`सूत्र: आधार:लंब:कर्ण = 3:4:5 (Base:Perp:Hyp)`);
+      steps.push(`आधार (Base) दिया है`);
+      steps.push(`${aadhar} ÷ 3 = ${scale.toFixed(3)}`);
+      lamb = scale*4; karn = scale*5;
+      steps.push(`${scale.toFixed(3)} × 4 = ${lamb.toFixed(2)}`);
+      steps.push(`${scale.toFixed(3)} × 5 = ${karn.toFixed(2)}`);
+      setVal(lambI, +lamb.toFixed(2));
+      setVal(karnI, +karn.toFixed(2));
+      stepsEN.push(`Formula: Base:Perp:Hyp = 3:4:5`);
+      stepsEN.push(`Given Base (Aadhar) = ${aadhar}`);
+      stepsEN.push(`Scale = ${aadhar} / 3 = ${scale.toFixed(3)}`);
+      stepsEN.push(`Perpendicular (Lamb) = ${scale.toFixed(3)} x 4 = ${lamb.toFixed(2)}`);
+      stepsEN.push(`Hypotenuse (Karn) = ${scale.toFixed(3)} x 5 = ${karn.toFixed(2)}`);
+    } else if(has[1]){
+      const scale = lamb/4;
+      steps.push(`सूत्र: आधार:लंब:कर्ण = 3:4:5 (Base:Perp:Hyp)`);
+      steps.push(`लंब (Perpendicular) दिया है`);
+      steps.push(`${lamb} ÷ 4 = ${scale.toFixed(3)}`);
+      aadhar = scale*3; karn = scale*5;
+      steps.push(`${scale.toFixed(3)} × 3 = ${aadhar.toFixed(2)}`);
+      steps.push(`${scale.toFixed(3)} × 5 = ${karn.toFixed(2)}`);
+      setVal(aadharI, +aadhar.toFixed(2));
+      setVal(karnI, +karn.toFixed(2));
+      stepsEN.push(`Formula: Base:Perp:Hyp = 3:4:5`);
+      stepsEN.push(`Given Perpendicular (Lamb) = ${lamb}`);
+      stepsEN.push(`Scale = ${lamb} / 4 = ${scale.toFixed(3)}`);
+      stepsEN.push(`Base (Aadhar) = ${scale.toFixed(3)} x 3 = ${aadhar.toFixed(2)}`);
+      stepsEN.push(`Hypotenuse (Karn) = ${scale.toFixed(3)} x 5 = ${karn.toFixed(2)}`);
+    } else {
+      const scale = karn/5;
+      steps.push(`सूत्र: आधार:लंब:कर्ण = 3:4:5 (Base:Perp:Hyp)`);
+      steps.push(`कर्ण (Hypotenuse) दिया है`);
+      steps.push(`${karn} ÷ 5 = ${scale.toFixed(3)}`);
+      aadhar = scale*3; lamb = scale*4;
+      steps.push(`${scale.toFixed(3)} × 3 = ${aadhar.toFixed(2)}`);
+      steps.push(`${scale.toFixed(3)} × 4 = ${lamb.toFixed(2)}`);
+      setVal(aadharI, +aadhar.toFixed(2));
+      setVal(lambI, +lamb.toFixed(2));
+      stepsEN.push(`Formula: Base:Perp:Hyp = 3:4:5`);
+      stepsEN.push(`Given Hypotenuse (Karn) = ${karn}`);
+      stepsEN.push(`Scale = ${karn} / 5 = ${scale.toFixed(3)}`);
+      stepsEN.push(`Base (Aadhar) = ${scale.toFixed(3)} x 3 = ${aadhar.toFixed(2)}`);
+      stepsEN.push(`Perpendicular (Lamb) = ${scale.toFixed(3)} x 4 = ${lamb.toFixed(2)}`);
+    }
+    errBox.style.color = 'var(--accent3)';
+    errBox.textContent = '✓ 3:4:5 (गुनिया) नियम से बाकी 2 भुजाएँ निकाली गई हैं';
+  } else if(count === 2){
+    if(!has[0]){
+      if(karn<=lamb){ errBox.textContent='कर्ण, लंब से बड़ा होना चाहिए'; return; }
+      steps.push(`सूत्र: आधार² = कर्ण² − लंब² (Base² = Hyp² − Perp²)`);
+      steps.push(`कर्ण (Hyp), लंब (Perp) दिए हैं`);
+      steps.push(`${karn}² − ${lamb}²`);
+      steps.push(`${(karn*karn).toFixed(2)} − ${(lamb*lamb).toFixed(2)} = ${(karn*karn - lamb*lamb).toFixed(2)}`);
+      aadhar = Math.sqrt(karn*karn - lamb*lamb);
+      steps.push(`√${(karn*karn - lamb*lamb).toFixed(2)} = ${aadhar.toFixed(2)}`);
+      setVal(aadharI, +aadhar.toFixed(2));
+      stepsEN.push(`Formula: Base^2 = Hyp^2 - Perp^2`);
+      stepsEN.push(`Hyp (Karn) = ${karn}, Perp (Lamb) = ${lamb}`);
+      stepsEN.push(`${karn}^2 - ${lamb}^2`);
+      stepsEN.push(`${(karn*karn).toFixed(2)} - ${(lamb*lamb).toFixed(2)} = ${(karn*karn - lamb*lamb).toFixed(2)}`);
+      stepsEN.push(`sqrt(${(karn*karn - lamb*lamb).toFixed(2)}) = ${aadhar.toFixed(2)}`);
+    } else if(!has[1]){
+      if(karn<=aadhar){ errBox.textContent='कर्ण, आधार से बड़ा होना चाहिए'; return; }
+      steps.push(`सूत्र: लंब² = कर्ण² − आधार² (Perp² = Hyp² − Base²)`);
+      steps.push(`कर्ण (Hyp), आधार (Base) दिए हैं`);
+      steps.push(`${karn}² − ${aadhar}²`);
+      steps.push(`${(karn*karn).toFixed(2)} − ${(aadhar*aadhar).toFixed(2)} = ${(karn*karn - aadhar*aadhar).toFixed(2)}`);
+      lamb = Math.sqrt(karn*karn - aadhar*aadhar);
+      steps.push(`√${(karn*karn - aadhar*aadhar).toFixed(2)} = ${lamb.toFixed(2)}`);
+      setVal(lambI, +lamb.toFixed(2));
+      stepsEN.push(`Formula: Perp^2 = Hyp^2 - Base^2`);
+      stepsEN.push(`Hyp (Karn) = ${karn}, Base (Aadhar) = ${aadhar}`);
+      stepsEN.push(`${karn}^2 - ${aadhar}^2`);
+      stepsEN.push(`${(karn*karn).toFixed(2)} - ${(aadhar*aadhar).toFixed(2)} = ${(karn*karn - aadhar*aadhar).toFixed(2)}`);
+      stepsEN.push(`sqrt(${(karn*karn - aadhar*aadhar).toFixed(2)}) = ${lamb.toFixed(2)}`);
+    } else {
+      steps.push(`सूत्र: कर्ण² = आधार² + लंब² (Hyp² = Base² + Perp²)`);
+      steps.push(`आधार (Base), लंब (Perp) दिए हैं`);
+      steps.push(`${aadhar}² + ${lamb}²`);
+      steps.push(`${(aadhar*aadhar).toFixed(2)} + ${(lamb*lamb).toFixed(2)} = ${(aadhar*aadhar + lamb*lamb).toFixed(2)}`);
+      karn = Math.sqrt(aadhar*aadhar + lamb*lamb);
+      steps.push(`√${(aadhar*aadhar + lamb*lamb).toFixed(2)} = ${karn.toFixed(2)}`);
+      setVal(karnI, +karn.toFixed(2));
+      stepsEN.push(`Formula: Hyp^2 = Base^2 + Perp^2`);
+      stepsEN.push(`Base (Aadhar) = ${aadhar}, Perp (Lamb) = ${lamb}`);
+      stepsEN.push(`${aadhar}^2 + ${lamb}^2`);
+      stepsEN.push(`${(aadhar*aadhar).toFixed(2)} + ${(lamb*lamb).toFixed(2)} = ${(aadhar*aadhar + lamb*lamb).toFixed(2)}`);
+      stepsEN.push(`sqrt(${(aadhar*aadhar + lamb*lamb).toFixed(2)}) = ${karn.toFixed(2)}`);
+    }
+  } else {
+    steps.push(`सूत्र: कर्ण² = आधार² + लंब² (Hyp² = Base² + Perp²) — जाँच`);
+    steps.push(`आधार (Base), लंब (Perp) दिए हैं`);
+    steps.push(`${aadhar}² + ${lamb}²`);
+    steps.push(`${(aadhar*aadhar).toFixed(2)} + ${(lamb*lamb).toFixed(2)} = ${(aadhar*aadhar + lamb*lamb).toFixed(2)}`);
+    karn = Math.sqrt(aadhar*aadhar + lamb*lamb);
+    steps.push(`√${(aadhar*aadhar + lamb*lamb).toFixed(2)} = ${karn.toFixed(2)}`);
+    setVal(karnI, +karn.toFixed(2));
+    stepsEN.push(`Formula: Hyp^2 = Base^2 + Perp^2 (check)`);
+    stepsEN.push(`Base (Aadhar) = ${aadhar}, Perp (Lamb) = ${lamb}`);
+    stepsEN.push(`${aadhar}^2 + ${lamb}^2`);
+    stepsEN.push(`${(aadhar*aadhar).toFixed(2)} + ${(lamb*lamb).toFixed(2)} = ${(aadhar*aadhar + lamb*lamb).toFixed(2)}`);
+    stepsEN.push(`sqrt(${(aadhar*aadhar + lamb*lamb).toFixed(2)}) = ${karn.toFixed(2)}`);
+  }
+
+  stepsList.innerHTML = steps.map((s,i)=>`<div class="step-line"><b>स्टेप ${i+1}:</b> ${s}</div>`).join('');
+  stepsCard.style.display='block';
+
+  // ---- Show Karn Banner ----
+  const karnBanner = $('karnBanner');
+  const karnBannerValue = $('karnBannerValue');
+  const karnBannerUnit = $('karnBannerUnit');
+  const karnFeetBreakdown = $('karnFeetBreakdown');
+  karnBannerValue.textContent = karn.toFixed(2);
+  karnBannerUnit.textContent = currentUnit;
+
+  // Feet + Inch + Sut breakdown — hamesha dikhao (chahe koi bhi unit ho)
+  const unitToFeet = { feet: 1, m: 3.28084, cm: 0.0328084, mm: 0.00328084, inch: 1/12 };
+  const karnInFeet = karn * (unitToFeet[currentUnit] || 1);
+  const totalSut = Math.round(karnInFeet * 12 * 8);
+  const feetPart = Math.floor(totalSut / (12 * 8));
+  const remAfterFeet = totalSut % (12 * 8);
+  const inchPart = Math.floor(remAfterFeet / 8);
+  const sutPart = remAfterFeet % 8;
+  $('kb-feet').textContent = feetPart;
+  $('kb-inch').textContent = inchPart;
+  $('kb-sut').textContent = sutPart;
+  // Sub label mein unit dikhao agar feet nahi hai
+  $('karnFeetBreakdownLabel').textContent = currentUnit === 'feet'
+    ? '📏 आसान भाषा में (Feet · Inch · सूत)'
+    : `📏 Feet में बदलकर (${currentUnit} → Feet · Inch · सूत)`;
+  karnFeetBreakdown.style.display = 'block';
+
+  karnBanner.classList.remove('visible');
+  void karnBanner.offsetWidth; // restart animation
+  karnBanner.classList.add('visible');
+
+  addToHistory(aadhar.toFixed(2), lamb.toFixed(2), karn.toFixed(2), currentUnit);
+
+  lastResult = {aadhar: aadhar.toFixed(2), lamb: lamb.toFixed(2), karn: karn.toFixed(2), unit: currentUnit};
+  lastSteps = stepsEN.slice();
+
+  // Calculate ho gaya → button white wapas
+  calcBtn.classList.remove('calc-dirty');
+}
+
+[aadharI,lambI,karnI].forEach(el=>el.addEventListener('input', ()=>{
+  errBox.textContent='';
+  const len = el.value.length || 1;
+  el.style.width = (len+1)+'ch';
+  // Naap likha/badla → button blue
+  calcBtn.classList.add('calc-dirty');
+}));
+// drag disabled — fixed positions
+
+const calcBtn=$('calcBtn');
+calcBtn.addEventListener('click', update);
+
+// tapping the unit label (cm/feet/etc) also opens the number keyboard for that side
+document.querySelectorAll('.unit-badge').forEach(badge=>{
+  badge.addEventListener('pointerdown', (e)=> e.stopPropagation());
+  badge.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const target = document.getElementById(badge.dataset.for);
+    if(target) target.focus();
+  });
+});
+
+pdfBtn.addEventListener('click', ()=>{
+  if(stepsCard.style.display==='none' || !lastResult){
+    errBox.style.color='var(--err)';
+    errBox.textContent='पहले "कैलकुलेट करो" दबाकर नाप निकालो, फिर PDF बनेगा';
+    return;
+  }
+  document.body.classList.add('hide-history-print');
+  window.print();
+  setTimeout(()=>{ document.body.classList.remove('hide-history-print'); }, 1000);
+});
+
+historyPdfBtn.addEventListener('click', ()=>{
+  if(history.length===0){
+    errBox.style.color='var(--err)';
+    errBox.textContent='अभी कोई पुराना नाप सेव नहीं है';
+    return;
+  }
+  document.body.classList.add('history-only-print');
+  window.print();
+  setTimeout(()=>{ document.body.classList.remove('history-only-print'); }, 1000);
+});
+
+
+
+// position save/reset removed — fixed layout
+
+drawBase();
+positionOverlay();
+window.addEventListener('resize', positionOverlay);
+
+// PWA Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=> console.log('SW registered'))
+      .catch(e=> console.log('SW error:', e));
+  });
+}
+</script>
+</body>
+</html>
